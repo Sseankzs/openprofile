@@ -8,13 +8,14 @@ const Home = () => {
   const handleSelect = (role: "applicant" | "company") => {
     router.push(`/${role}/login`);
   };
+
   return (
-    <div className="min-h-full h-80 max-h-screen flex items-center justify-center  dark:bg-crowblack px-6">
-      <div className="w-full max-w-xl p-10 bg-white dark:bg-gray-900 rounded-xl shadow-xl max-h-[90vh] overflow-auto">
-        <h1 className="text-2xl md:text-3xl font-semibold text-crowblack dark:text-white mb-6">
+    <div className="min-h-full h-80 max-h-lvh flex items-center justify-center dark:bg-crowblack px-6 font-mono" >
+      <div className="w-full max-w-xl p-10 bg-whitechocolate dark:bg-crowblack rounded-xl shadow-xl h-[45vh] overflow-auto">
+        <h1 className="text-2xl md:text-3xl font-semibold text-fireopal dark:text-whitechocolate mb-6">
           Welcome to openprofile
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-10">
+        <p className="text-gray-600 dark:whitechocolate mb-10">
           Are you looking for a job or posting a job?
         </p>
 

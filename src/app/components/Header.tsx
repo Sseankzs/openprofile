@@ -7,7 +7,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="bg-whitechocolate shadow-md py-4 px-4 md:px-12 top-0 z-50 fixed w-full">
+    <header className="bg-whitechocolate shadow-md py-4 px-4 md:px-12 top-0 z-50 sticky w-full">
       <nav className="flex justify-between items-center max-w-7xl mx-auto">
         {/* Logo */}
         <Link href="/">

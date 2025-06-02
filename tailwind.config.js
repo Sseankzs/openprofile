@@ -14,7 +14,7 @@ module.exports = {
 			//Pureple Palette
 			royalpurple: '#3C33AE',
 			lightgray: '#B3BBC6',
-			lightwhite: '#F0F0EC',
+			yellowwhite: '#F0F0EC',
 
 			//Red Palette
 			fireopal: '#E16062',
