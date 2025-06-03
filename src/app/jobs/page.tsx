@@ -1,10 +1,9 @@
-/* List of jobs posted*/
 import React from 'react'
 
-const JobsPosted = () => {
+const Jobs = () => {
   return (
-    <div>JobsPosted</div>
+    <div>Jobs</div>
   )
 }
 
-export default JobsPosted
+export default Jobs

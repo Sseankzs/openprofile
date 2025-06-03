@@ -1,6 +1,7 @@
 'use client';
+
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
@@ -11,6 +12,9 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [role, setRole] = useState<"applicant" | "company" | null>(null);
   const router = useRouter();
+
+  const dropdownRef = useRef<HTMLLIElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -31,6 +35,25 @@ export default function Header() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    if (dropdownOpen || menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen, menuOpen]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -73,18 +96,29 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <ul className="hidden md:flex space-x-6 text-3C33AE font-medium items-center">
-          <li>
-            <Link href="/results" className="text-firered hover:text-crowblack font-mono">
-              Results
-            </Link>
-          </li>
-          <li>
-            <Link href="/about" className="text-firered hover:text-crowblack font-mono">
-              About
-            </Link>
-          </li>
+          {role === "applicant" && (
+            <>
+              <li>
+                <Link href="/jobs" className="text-firered hover:text-crowblack font-mono">
+                  Job Search
+                </Link>
+              </li>
+              <li>
+                <Link href="/documents" className="text-firered hover:text-crowblack font-mono">
+                  Documents
+                </Link>
+              </li>
+            </>
+          )}
+          {role === "company" && (
+            <li>
+              <Link href="/post-job" className="text-firered hover:text-crowblack font-mono">
+                Post a Job
+              </Link>
+            </li>
+          )}
           {user && (
-            <li className="relative">
+            <li className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="text-firered hover:text-crowblack font-mono"
@@ -94,13 +128,19 @@ export default function Header() {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 bg-white border rounded shadow-lg w-48 z-50">
                   <button
-                    onClick={handleSignOut}
+                    onClick={() => {
+                      handleSignOut();
+                      setDropdownOpen(false);
+                    }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 font-mono text-crowblack"
                   >
                     Logout
                   </button>
                   <button
-                    onClick={handleSwitchRole}
+                    onClick={() => {
+                      handleSwitchRole();
+                      setDropdownOpen(false);
+                    }}
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 font-mono text-crowblack"
                   >
                     {role === "company" ? "Find a Job" : "Hire as a Company"}
@@ -114,30 +154,72 @@ export default function Header() {
 
       {/* Mobile Nav */}
       {menuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-whitechocolate shadow-md transition-all duration-300 z-40">
+        <div
+          ref={mobileMenuRef}
+          className="md:hidden absolute top-full left-0 w-full bg-whitechocolate shadow-md transition-all duration-300 z-40"
+        >
           <ul className="flex flex-col items-center space-y-4 py-4">
-            <li>
-              <Link href="/results" className="text-firered hover:text-crowblack font-mono" onClick={() => setMenuOpen(false)}>
-                Results
-              </Link>
-            </li>
-            <li>
-              <Link href="/about" className="text-firered hover:text-crowblack font-mono" onClick={() => setMenuOpen(false)}>
-                About
-              </Link>
-            </li>
+            {role === "applicant" && (
+              <>
+                <li>
+                  <Link
+                    href="/jobs"
+                    className="text-firered hover:text-crowblack font-mono"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Job Search
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/documents"
+                    className="text-firered hover:text-crowblack font-mono"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Documents
+                  </Link>
+                </li>
+              </>
+            )}
+            {role === "company" && (
+              <li>
+                <Link
+                  href="/post-job"
+                  className="text-firered hover:text-crowblack font-mono"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Post a Job
+                </Link>
+              </li>
+            )}
             <li>
               {user ? (
                 <div className="text-center">
-                  <button onClick={handleSignOut} className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono">
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setMenuOpen(false);
+                    }}
+                    className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
+                  >
                     Logout
                   </button>
-                  <button onClick={handleSwitchRole} className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono">
+                  <button
+                    onClick={() => {
+                      handleSwitchRole();
+                      setMenuOpen(false);
+                    }}
+                    className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
+                  >
                     {role === "company" ? "Find a Job" : "Hire as a Company"}
                   </button>
                 </div>
               ) : (
-                <Link href="/login" className="text-firered hover:text-crowblack font-mono" onClick={() => setMenuOpen(false)}>
+                <Link
+                  href="/login"
+                  className="text-firered hover:text-crowblack font-mono"
+                  onClick={() => setMenuOpen(false)}
+                >
                   Login
                 </Link>
               )}
