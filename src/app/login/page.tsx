@@ -2,51 +2,46 @@
 
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
-
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function ApplicantSignup() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data: signUpData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        data: { role: "applicant" },
-      },
     });
 
     if (error) {
-      alert("Error signing up: " + error.message);
-      return;
+      alert("Login failed: " + error.message);
+    } else {
+      const role = localStorage.getItem("selectedRole");
+
+      if (role === "applicant") {
+        // Optional: insert into applicant_profiles if not exists
+        router.push("/applicant/dashboard");
+      } else if (role === "company") {
+        // Optional: insert into company_profiles if not exists
+        router.push("/company/dashboard");
+      } // Redirect to applicant dashboard after successful login
     }
-
-    const userId = signUpData.user?.id;
-
-    if (!userId) {
-      alert("User not created properly.");
-      return;
-    }
-
-
-    router.push("/applicant/dashboard");
   };
-
 
   return (
     <div className="max-w-md mx-auto p-6 bg-softwhite rounded shadow">
-      <h2 className="text-xl font-bold mb-4 font-mono">Applicant Signup</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <h2 className="text-xl font-bold mb-4 font-mono">Login</h2>
+      <form onSubmit={handleLogin} className="space-y-4">
         <input
           type="email"
           name="email"
@@ -71,11 +66,11 @@ export default function ApplicantSignup() {
             type="submit"
             className="bg-fireopal text-white px-4 py-2 rounded hover:bg-crowblack font-mono"
           >
-            Sign Up
+            Log In
           </button>
           <p className="text-sm text-gray-500">
-            <a href="/applicant/login" className="text-fireopal hover:text-crowblack font-mono">
-              Already have an account?
+            <a href="/signup" className="text-fireopal hover:underline hover:text-crowblack font-mono">
+              Don’t have an account?
             </a>
           </p>
         </div>

@@ -8,6 +8,8 @@ import { User } from '@supabase/supabase-js';
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [role, setRole] = useState<"applicant" | "company" | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -18,7 +20,9 @@ export default function Header() {
 
     checkUser();
 
-    // Listen for auth changes
+    const storedRole = localStorage.getItem("selectedRole") as "applicant" | "company" | null;
+    setRole(storedRole);
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -29,12 +33,16 @@ export default function Header() {
   }, []);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      alert('Error signing out: ' + error.message);
-    } else {
-      router.push('/');
-    }
+    await supabase.auth.signOut();
+    localStorage.removeItem("selectedRole");
+    router.push('/');
+  };
+
+  const handleSwitchRole = () => {
+    const newRole = role === "company" ? "applicant" : "company";
+    localStorage.setItem("selectedRole", newRole);
+    setRole(newRole);
+    router.push(`/${newRole}/dashboard`);
   };
 
   return (
@@ -64,7 +72,7 @@ export default function Header() {
         </button>
 
         {/* Desktop Nav */}
-        <ul className="hidden md:flex space-x-6 text-3C33AE font-medium">
+        <ul className="hidden md:flex space-x-6 text-3C33AE font-medium items-center">
           <li>
             <Link href="/results" className="text-firered hover:text-crowblack font-mono">
               Results
@@ -75,13 +83,32 @@ export default function Header() {
               About
             </Link>
           </li>
-          <li>
-            {user ? (
-              <button onClick={handleSignOut} className="text-firered hover:text-crowblack font-mono">
-                Logout
+          {user && (
+            <li className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="text-firered hover:text-crowblack font-mono"
+              >
+                Menu ▾
               </button>
-            ) : null}
-          </li>
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 bg-white border rounded shadow-lg w-48 z-50">
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 font-mono text-crowblack"
+                  >
+                    Logout
+                  </button>
+                  <button
+                    onClick={handleSwitchRole}
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 font-mono text-crowblack"
+                  >
+                    {role === "company" ? "Find a Job" : "Hire as a Company"}
+                  </button>
+                </div>
+              )}
+            </li>
+          )}
         </ul>
       </nav>
 
@@ -101,9 +128,14 @@ export default function Header() {
             </li>
             <li>
               {user ? (
-                <button onClick={handleSignOut} className="text-firered hover:text-crowblack font-mono">
-                  Logout
-                </button>
+                <div className="text-center">
+                  <button onClick={handleSignOut} className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono">
+                    Logout
+                  </button>
+                  <button onClick={handleSwitchRole} className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono">
+                    {role === "company" ? "Find a Job" : "Hire as a Company"}
+                  </button>
+                </div>
               ) : (
                 <Link href="/login" className="text-firered hover:text-crowblack font-mono" onClick={() => setMenuOpen(false)}>
                   Login

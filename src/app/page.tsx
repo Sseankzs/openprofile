@@ -2,11 +2,27 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
 
 const Home = () => {
 
 
   const router = useRouter();
+
+  const redirectToRole = (session: Session | null, role: "applicant" | "company") => {
+    if (role === null) {
+      router.push('/');
+    }
+    if (session && role) {
+        // Logged in and role selected → redirect to dashboard
+        router.push(`/${role}/dashboard`);
+      } else if (session && !role) {
+        // Logged in but no role selected → go to role selection
+        router.push('/');
+      } else {
+      }
+    localStorage.setItem("selectedRole", role);
+  }
 
   useEffect(() => {
     const checkSession = async () => {
@@ -14,29 +30,24 @@ const Home = () => {
         data: { session },
       } = await supabase.auth.getSession();
 
-
-      const role = session?.user?.user_metadata?.role;
-      if (!session || !role) {
-        // If no session or role, redirect to the home page
+      const role = localStorage.getItem("selectedRole");
+      if (!role) {
+        // No role selected, redirect to home
         router.push('/');
         return;
       }
-      /*
-
-      if (role === 'company') {
-        router.push('/company/dashboard');
-      } else if (role === 'applicant') {
-        router.push('/applicant/dashboard');
-      }
-      */
+      redirectToRole(session, role as "applicant" | "company");
     };
 
     checkSession();
   }, [router]);
 
   const handleSelect = (role: "applicant" | "company") => {
-    router.push(`/${role}/login`);
+    localStorage.setItem("selectedRole", role);
+    redirectToRole(null, role); // Redirect to the appropriate dashboard
+    router.push("/login"); // after role select, go to login/signup
   };
+
 
   return (
     <div className="min-h-full h-80 max-h-lvh flex items-center justify-center dark:bg-crowblack px-6 font-mono" >

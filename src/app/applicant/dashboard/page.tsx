@@ -111,7 +111,11 @@ export default function ApplicantDashboard() {
         </div>
       )}
 
-      {/* Dashboard content goes here */}
+      {/* Main Dashboard Content */}
+      <div className="max-w-4xl mx-auto p-6 bg-softwhite rounded shadow">
+        <h1 className="text-2xl font-bold mb-6 text-left text-gray-800 dark:text-white">Applicant Dashboard</h1>
+        <p className="text-gray-600 dark:text-gray-300">Welcome to your dashboard! Here you can manage your applications and profile.</p>
+      </div>
     </div>
   );
 }
