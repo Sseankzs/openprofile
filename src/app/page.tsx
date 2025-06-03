@@ -1,9 +1,38 @@
 'use client'
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 const Home = () => {
+
+
   const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+
+      const role = session?.user?.user_metadata?.role;
+      if (!session || !role) {
+        // If no session or role, redirect to the home page
+        router.push('/');
+        return;
+      }
+      /*
+
+      if (role === 'company') {
+        router.push('/company/dashboard');
+      } else if (role === 'applicant') {
+        router.push('/applicant/dashboard');
+      }
+      */
+    };
+
+    checkSession();
+  }, [router]);
 
   const handleSelect = (role: "applicant" | "company") => {
     router.push(`/${role}/login`);

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
+
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,21 +13,35 @@ const supabase = createClient(
 export default function ApplicantSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: { role: "applicant" },
+      },
     });
 
     if (error) {
       alert("Error signing up: " + error.message);
-    } else {
-      alert("Check your email to confirm your signup!");
+      return;
     }
+
+    const userId = signUpData.user?.id;
+
+    if (!userId) {
+      alert("User not created properly.");
+      return;
+    }
+
+
+    router.push("/applicant/dashboard");
   };
+
 
   return (
     <div className="max-w-md mx-auto p-6 bg-softwhite rounded shadow">

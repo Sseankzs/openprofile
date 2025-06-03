@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import router from "next/router";
+import { useRouter } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +12,8 @@ const supabase = createClient(
 export default function ApplicantLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +26,6 @@ export default function ApplicantLogin() {
     if (error) {
       alert("Login failed: " + error.message);
     } else {
-      alert("Login successful!");
       router.push("/applicant/dashboard"); // Redirect to applicant dashboard after successful login
       // You can redirect here if needed
       // router.push("/dashboard");

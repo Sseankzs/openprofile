@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState ,useEffect} from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 
@@ -10,9 +10,27 @@ export default function CompanyLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        // Redirect to dashboard if already logged in
+        router.push('/dashboard/company');
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
