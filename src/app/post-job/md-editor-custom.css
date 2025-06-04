@@ -1,0 +1,11 @@
+.w-md-editor-text,
+.w-md-editor-text-pre,
+.w-md-editor-content,
+.w-md-editor-content * {
+  font-family: monospace !important;
+}
+
+.wmde-markdown,
+.wmde-markdown * {
+  font-family: monospace !important;
+}
