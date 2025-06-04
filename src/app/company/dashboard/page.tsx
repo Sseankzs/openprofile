@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import CompanyProfileModal from '@/app/components/EditCompany';
 
 type Job = {
   id: string;
@@ -63,7 +64,9 @@ export default function CompanyDashboard() {
   }, []);
 
   return (
+    
     <div className="min-h-[75vh] bg-gray-100 p-6 font-mono overflow-hidden">
+      <CompanyProfileModal />
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-6">
         {/* Left (Sticky Profile) */}
         <div className="md:col-span-2 overflow-y-auto">
