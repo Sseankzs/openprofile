@@ -1,169 +1,142 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function CompanyProfileModal() {
-    const [showModal, setShowModal] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [profileExists, setProfileExists] = useState(false);
-    const [error, setError] = useState('');
-    const [form, setForm] = useState({
-        company_name: '',
-        email: '',
-        phone: '',
-        website: '',
-        location: '',
-        description: '',
-        logo_url: '',
-    });
-    const [logoFile, setLogoFile] = useState<File | null>(null);
+export default function EditCompanyModal({ profile, onClose, onUpdate, forceOpen = false }: any) {
+  const [companyName, setCompanyName] = useState(profile?.company_name || '');
+  const [phone, setPhone] = useState(profile?.phone || '');
+  const [website, setWebsite] = useState(profile?.website || '');
+  const [description, setDescription] = useState(profile?.description || '');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [error, setError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        const checkProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
-            const { data, error } = await supabase
-                .from('company_profiles')
-                .select('id')
-                .eq('user_id', user.id)
-                .single();
-                setProfileExists(!!data)
+    if (imageFile && imageFile.size > 1 * 1024 * 1024) {
+      setError('Image must be under 1MB');
+      return;
+    }
 
-            if (!data) {
-                setShowModal(true);
-            }
-        };
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-        checkProfile();
-    }, []);
+    if (!user) return;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+    let logoUrl = profile?.logo_url || '';
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file && file.size > 2 * 1024 * 1024) {
-            setError('Logo must be under 2MB');
-            return;
-        }
-        setLogoFile(file || null);
-    };
-
-    const handleSubmit = async () => {
-        setLoading(true);
-        setError('');
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            setError('Not logged in');
-            setLoading(false);
-            return;
-        }
-
-        let logo_url = '';
-        if (logoFile) {
-            const { data, error: uploadError } = await supabase.storage
-                .from('company-logos')
-                .upload(`logo-${user.id}`, logoFile, {
-                    cacheControl: '3600',
-                    upsert: true,
-                });
-
-            if (uploadError) {
-                setError('Failed to upload logo');
-                setLoading(false);
-                return;
-            }
-
-            const { data: publicUrlData } = supabase
-                .storage
-                .from('company-logos')
-                .getPublicUrl(`logo-${user.id}`);
-
-            logo_url = publicUrlData.publicUrl;
-        }
-
-        const { error: insertError } = await supabase.from('company_profiles').insert({
-            user_id: user.id,
-            ...form,
-            logo_url,
+    if (imageFile) {
+      const { error: uploadError } = await supabase.storage
+        .from('company-logos')
+        .upload(`logo-${user.id}`, imageFile, {
+          upsert: true,
+          cacheControl: '3600',
         });
 
-        if (insertError) {
-            setError('Failed to create profile');
-        } else {
-            setShowModal(false);
-        }
+      if (uploadError) {
+        setError('Failed to upload logo: ' + uploadError.message);
+        return;
+      }
 
-        setLoading(false);
-    };
+      const { data: publicUrl } = supabase.storage
+        .from('company-logos')
+        .getPublicUrl(`logo-${user.id}`);
+      logoUrl = publicUrl.publicUrl;
+    }
 
-    if (!showModal) return null;
+    const { error: updateError } = await supabase.from('company_profiles').upsert({
+      user_id: user.id,
+      company_name: companyName,
+      phone,
+      website,
+      description,
+      logo_url: logoUrl,
+      email: user.email, // Save current email
+    });
 
-    return (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 rounded shadow-lg space-y-4 font-mono">
-                {profileExists && (
-                    <button
-                        onClick={() => setShowModal(false)}
-                        className="absolute top-4 right-4 text-gray-500 hover:text-black text-2xl font-bold"
-                        aria-label="Close"
-                    >
-                        ×
-                    </button>
-                )}
-                
-                <h2 className="text-2xl font-bold mb-4">Set Up Company Profile</h2>
+    if (updateError) {
+      setError('Failed to update profile');
+      return;
+    }
 
-                {error && <p className="text-red-600">{error}</p>}
+    onUpdate();
+    onClose();
+  };
 
-                {['company_name', 'email', 'phone', 'website', 'location'].map((field) => (
-                    <div key={field}>
-                        <label className="block font-semibold capitalize">{field.replace('_', ' ')}</label>
-                        <input
-                            name={field}
-                            value={form[field as keyof typeof form]}
-                            onChange={handleChange}
-                            className="w-full border px-4 py-2 rounded"
-                            required
-                        />
-                    </div>
-                ))}
+  return (
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h2 className="text-xl font-bold">Complete Your Company Profile</h2>
 
-                <div>
-                    <label className="block font-semibold">Description</label>
-                    <textarea
-                        name="description"
-                        value={form.description}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full border px-4 py-2 rounded"
-                    />
-                </div>
+          {error && <p className="text-red-500">{error}</p>}
 
-                <div>
-                    <label className="block font-semibold">Company Logo (Max 2MB)</label>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="block w-full text-sm"
-                    />
-                </div>
+          <input
+            type="text"
+            placeholder="Company Name"
+            className="border border-gray-300 rounded px-4 py-2 w-full"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            required
+          />
 
-                <div className="flex justify-end pt-4">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading}
-                        className="bg-firered hover:bg-red-600 text-white px-6 py-2 rounded"
-                    >
-                        {loading ? 'Saving...' : 'Submit'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+          <input
+            type="text"
+            placeholder="Phone Number"
+            className="border border-gray-300 rounded px-4 py-2 w-full"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+
+          <input
+            type="url"
+            placeholder="Website"
+            className="border border-gray-300 rounded px-4 py-2 w-full"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+
+          <textarea
+            placeholder="Company Description"
+            className="border border-gray-300 rounded px-4 py-2 w-full min-h-[100px]"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+
+          <div>
+            <label className="block mb-1 font-medium">Company Logo (max 1MB)</label>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileRef}
+              className="border border-gray-300 rounded px-4 py-2 w-full"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setImageFile(file);
+              }}
+            />
+          </div>
+
+          <div className="flex justify-end mt-4">
+            {!forceOpen && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 mr-4 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+            )}
+            <button type="submit" className="px-4 py-2 bg-firered text-white rounded">
+              Save Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }

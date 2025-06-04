@@ -71,14 +71,12 @@ export default function Header() {
   return (
     <header className="bg-whitechocolate shadow-md py-4 px-4 md:px-12 top-0 z-50 sticky w-full">
       <nav className="flex justify-between items-center max-w-7xl mx-auto">
-        {/* Logo */}
         <Link href="/">
           <span className="text-xl text-firered font-mono font-extrabold cursor-pointer">
             openprofile
           </span>
         </Link>
 
-        {/* Hamburger */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden focus:outline-none"
@@ -94,30 +92,30 @@ export default function Header() {
           </svg>
         </button>
 
-        {/* Desktop Nav */}
-        <ul className="hidden md:flex space-x-6 text-3C33AE font-medium items-center">
-          {role === "applicant" && (
-            <>
+        {/* Desktop Nav - only show if user is logged in */} {/* ⬅️ Added conditional */}
+        {user && (
+          <ul className="hidden md:flex space-x-6 text-3C33AE font-medium items-center">
+            {role === "applicant" && (
+              <>
+                <li>
+                  <Link href="/jobs" className="text-firered hover:text-crowblack font-mono">
+                    Job Search
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/documents" className="text-firered hover:text-crowblack font-mono">
+                    Documents
+                  </Link>
+                </li>
+              </>
+            )}
+            {role === "company" && (
               <li>
-                <Link href="/jobs" className="text-firered hover:text-crowblack font-mono">
-                  Job Search
+                <Link href="/post-job" className="text-firered hover:text-crowblack font-mono">
+                  Post a Job
                 </Link>
               </li>
-              <li>
-                <Link href="/documents" className="text-firered hover:text-crowblack font-mono">
-                  Documents
-                </Link>
-              </li>
-            </>
-          )}
-          {role === "company" && (
-            <li>
-              <Link href="/post-job" className="text-firered hover:text-crowblack font-mono">
-                Post a Job
-              </Link>
-            </li>
-          )}
-          {user && (
+            )}
             <li className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -148,12 +146,12 @@ export default function Header() {
                 </div>
               )}
             </li>
-          )}
-        </ul>
+          </ul>
+        )}
       </nav>
 
-      {/* Mobile Nav */}
-      {menuOpen && (
+      {/* Mobile Nav - only show if user is logged in */} {/* ⬅️ Added conditional */}
+      {menuOpen && user && (
         <div
           ref={mobileMenuRef}
           className="md:hidden absolute top-full left-0 w-full bg-whitechocolate shadow-md transition-all duration-300 z-40"
@@ -193,36 +191,26 @@ export default function Header() {
               </li>
             )}
             <li>
-              {user ? (
-                <div className="text-center">
-                  <button
-                    onClick={() => {
-                      handleSignOut();
-                      setMenuOpen(false);
-                    }}
-                    className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
-                  >
-                    Logout
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSwitchRole();
-                      setMenuOpen(false);
-                    }}
-                    className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
-                  >
-                    {role === "company" ? "Find a Job" : "Hire as a Company"}
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className="text-firered hover:text-crowblack font-mono"
-                  onClick={() => setMenuOpen(false)}
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
                 >
-                  Login
-                </Link>
-              )}
+                  Logout
+                </button>
+                <button
+                  onClick={() => {
+                    handleSwitchRole();
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full px-4 py-2 text-firered hover:text-crowblack font-mono"
+                >
+                  {role === "company" ? "Find a Job" : "Hire as a Company"}
+                </button>
+              </div>
             </li>
           </ul>
         </div>
