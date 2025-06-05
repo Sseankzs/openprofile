@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { User } from '@supabase/supabase-js';
+import { useRoleContext } from "@/app/components/role-context";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [role, setRole] = useState<"applicant" | "company" | null>(null);
+  const { role, setRole } = useRoleContext();
   const router = useRouter();
 
   const dropdownRef = useRef<HTMLLIElement>(null);

@@ -11,7 +11,7 @@ module.exports = {
   			softwhite: '#F2F4F8',
 			crowblack: '#1A1A1A',
 			arcadewhite: '#F9FAFB',
-			//Pureple Palette
+			//Purple Palette
 			royalpurple: '#3C33AE',
 			lightgray: '#B3BBC6',
 			yellowwhite: '#F0F0EC',

@@ -6,6 +6,8 @@ import { Inter } from "next/font/google";
 import Header from "@/app/components/Header";
 import Footer from "./components/Footer";
 import { ThemeProvider } from 'next-themes';
+import { RoleProvider } from '@/app/components/role-context';
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,14 +22,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        <RoleProvider>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Header />
           <main className="max-w-5xl mx-auto px-4 py-6 pt-3">{children}</main>
           <Footer />
         </ThemeProvider>
+        </RoleProvider>
       </body>
     </html>
+    
   );
 }
