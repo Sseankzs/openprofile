@@ -2,6 +2,9 @@
 
 import { useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
+import { useRoleContext } from '@/app/components/role-context';
+
 
 export default function EditCompanyModal({ profile, onClose, onUpdate, forceOpen = false }: any) {
   const [companyName, setCompanyName] = useState(profile?.company_name || '');
@@ -11,6 +14,21 @@ export default function EditCompanyModal({ profile, onClose, onUpdate, forceOpen
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const { setRole } = useRoleContext();
+
+const handleSwitchRole = () => {
+  const newRole = "applicant";
+  localStorage.setItem("selectedRole", newRole);
+  setRole(newRole);  // update global state
+  router.refresh();
+};
+
+
+  const handleClick = () => {
+    handleSwitchRole(); 
+    router.push('/applicant/dashboard');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,7 +139,8 @@ export default function EditCompanyModal({ profile, onClose, onUpdate, forceOpen
             />
           </div>
 
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-between mt-4">
+            
             {!forceOpen && (
               <button
                 type="button"
@@ -131,7 +150,17 @@ export default function EditCompanyModal({ profile, onClose, onUpdate, forceOpen
                 Cancel
               </button>
             )}
-            <button type="submit" className="px-4 py-2 bg-firered text-white rounded">
+
+            {!profile?.company_name && (
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-900 rounded transition"
+                onClick={handleClick}>
+                Back to Applicant Profile
+              </button>
+            )}
+
+            <button type="submit" className="px-4 py-2 bg-firered hover:bg-crowblack text-white rounded transition">
               Save Profile
             </button>
           </div>
