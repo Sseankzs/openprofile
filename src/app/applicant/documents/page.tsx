@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import SplashScreen from '@/app/components/splashscreen'; // ✅ Import splash screen
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,8 +27,9 @@ export default function DocumentUploadPage() {
   const [fileUpload, setFileUpload] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [userID, setUserID] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true); // ✅ loading state
 
-  // Fetch user and documents from DB
+  // Fetch user and documents
   useEffect(() => {
     const fetchData = async () => {
       const {
@@ -38,6 +40,7 @@ export default function DocumentUploadPage() {
         router.push('/login');
         return;
       }
+
       setUserID(user.id);
 
       const { data: docs, error } = await supabase
@@ -49,15 +52,21 @@ export default function DocumentUploadPage() {
 
       if (error) {
         console.error('Error fetching documents:', error);
-        return;
       }
+
       setDocuments(docs || []);
+
       setSelectedDoc(
         docs && docs.length > 0
-          ? supabase.storage.from(activeTab === 'resume' ? 'resumes' : 'cover-letters').getPublicUrl(docs[0].file_path).data.publicUrl
+          ? supabase.storage
+              .from(activeTab === 'resume' ? 'resumes' : 'cover-letters')
+              .getPublicUrl(docs[0].file_path).data.publicUrl
           : null
       );
+
+      setLoading(false); // ✅ Done loading
     };
+
     fetchData();
   }, [router, activeTab]);
 
@@ -72,14 +81,12 @@ export default function DocumentUploadPage() {
       const filename = `${activeTab}-${userID}-${timestamp}.pdf`;
       const filePath = `${filename}`;
 
-      // Upload file to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(filePath, fileUpload, { cacheControl: '3600', upsert: false });
 
       if (uploadError) throw uploadError;
 
-      // Insert record in DB
       const { data: insertData, error: insertError } = await supabase
         .from('user_documents')
         .insert({
@@ -92,10 +99,8 @@ export default function DocumentUploadPage() {
 
       if (insertError) throw insertError;
 
-      // Update UI
       setDocuments(prev => [insertData, ...prev]);
 
-      // Update selected document preview
       const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
       setSelectedDoc(publicUrl);
       setFileUpload(null);
@@ -108,8 +113,13 @@ export default function DocumentUploadPage() {
   };
 
   const files = documents.map(doc =>
-    supabase.storage.from(activeTab === 'resume' ? 'resumes' : 'cover-letters').getPublicUrl(doc.file_path).data.publicUrl
+    supabase.storage
+      .from(activeTab === 'resume' ? 'resumes' : 'cover-letters')
+      .getPublicUrl(doc.file_path).data.publicUrl
   );
+
+  // ✅ Show splash screen while loading
+  if (loading) return <SplashScreen />;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -145,7 +155,7 @@ export default function DocumentUploadPage() {
               </li>
             ))}
           </ul>
-          {/* Upload section above header */}
+
           <form onSubmit={handleUpload} className="mt-6">
             <label className="block text-sm font-medium mb-1">Upload {activeTab === 'resume' ? 'Resume' : 'Cover Letter'}</label>
             <input

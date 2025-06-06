@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import CompanyProfileModal from '@/app/components/EditCompany';
+import SplashScreen from '@/app/components/splashscreen';
 import Link from 'next/link';
-
 
 type Job = {
   id: string;
@@ -27,6 +27,7 @@ export default function CompanyDashboard() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [postedJobs, setPostedJobs] = useState<Job[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [loading, setLoading] = useState(true); // 👈 splash loading state
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,9 +35,11 @@ export default function CompanyDashboard() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        setLoading(false); // even if user is not found
+        return;
+      }
 
-      // Fetch company profile by user_id
       const { data: profileData, error: profileError } = await supabase
         .from('company_profiles')
         .select('id, company_name, email, phone, website, description, logo_url')
@@ -45,12 +48,12 @@ export default function CompanyDashboard() {
 
       if (profileError || !profileData) {
         setShowEditModal(true);
+        setLoading(false); // 👈 important to hide splash
         return;
       }
 
       setProfile(profileData);
 
-      // Fetch jobs using company_id from company_profiles
       const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select('id, title, location, description')
@@ -58,10 +61,12 @@ export default function CompanyDashboard() {
 
       if (jobsError) {
         console.error('Error fetching jobs:', jobsError);
+        setLoading(false);
         return;
       }
 
-      if (jobsData) setPostedJobs(jobsData);
+      setPostedJobs(jobsData || []);
+      setLoading(false); // ✅ All done
     };
 
     fetchData();
@@ -70,6 +75,9 @@ export default function CompanyDashboard() {
   const refreshProfile = () => {
     window.location.reload();
   };
+
+  // 🚀 Show splash until data is ready
+  if (loading) return <SplashScreen />;
 
   return (
     <div className="min-h-[75vh] bg-gray-100 p-6 font-mono">
