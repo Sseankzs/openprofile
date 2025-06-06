@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import SplashScreen from '@/app/components/splashscreen'; // ✅ Import splash screen
+import SplashScreen from '@/app/components/splashscreen';
+import { useToast } from '@/app/components/ToastContext';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,8 +28,9 @@ export default function DocumentUploadPage() {
   const [fileUpload, setFileUpload] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [userID, setUserID] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true); // ✅ loading state
-
+  const [loading, setLoading] = useState(true);
+  const {showToast} = useToast();
+  
   // Fetch user and documents
   useEffect(() => {
     const fetchData = async () => {
@@ -64,53 +66,54 @@ export default function DocumentUploadPage() {
           : null
       );
 
-      setLoading(false); // ✅ Done loading
+      setLoading(false);
     };
 
     fetchData();
   }, [router, activeTab]);
 
   const handleUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userID || !fileUpload) return;
-    setUploading(true);
+  e.preventDefault();
+  if (!userID || !fileUpload) return;
+  setUploading(true);
 
-    try {
-      const bucket = activeTab === 'resume' ? 'resumes' : 'cover-letters';
-      const timestamp = Date.now();
-      const filename = `${activeTab}-${userID}-${timestamp}.pdf`;
-      const filePath = `${filename}`;
+  try {
+    const bucket = activeTab === 'resume' ? 'resumes' : 'cover-letters';
+    const timestamp = Date.now();
+    const filename = `${activeTab}-${userID}-${timestamp}.pdf`;
+    const filePath = `${filename}`;
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, fileUpload, { cacheControl: '3600', upsert: false });
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, fileUpload, { cacheControl: '3600', upsert: false });
 
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data: insertData, error: insertError } = await supabase
-        .from('user_documents')
-        .insert({
-          user_id: userID,
-          file_type: activeTab,
-          file_path: filePath,
-        })
-        .select()
-        .single();
+    const { data: insertData, error: insertError } = await supabase
+      .from('user_documents')
+      .insert({
+        user_id: userID,
+        file_type: activeTab,
+        file_path: filePath,
+      })
+      .select()
+      .single();
 
-      if (insertError) throw insertError;
+    if (insertError) throw insertError;
 
-      setDocuments(prev => [insertData, ...prev]);
+    setDocuments(prev => [insertData, ...prev]);
 
-      const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
-      setSelectedDoc(publicUrl);
-      setFileUpload(null);
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('Upload failed, please try again.');
-    }
+    const publicUrl = supabase.storage.from(bucket).getPublicUrl(filePath).data.publicUrl;
+    setSelectedDoc(publicUrl);
+    setFileUpload(null);
+    showToast('Document uploaded successfully!');  // << Show toast here!
+  } catch (error) {
+    console.error('Upload error:', error);
+    alert('Upload failed, please try again.');
+  }
 
-    setUploading(false);
-  };
+  setUploading(false);
+};
 
   const files = documents.map(doc =>
     supabase.storage
@@ -118,7 +121,6 @@ export default function DocumentUploadPage() {
       .getPublicUrl(doc.file_path).data.publicUrl
   );
 
-  // ✅ Show splash screen while loading
   if (loading) return <SplashScreen />;
 
   return (

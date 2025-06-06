@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import EditProfileModal from '@/app/components/EditApplicant';
 import SplashScreen from '@/app/components/splashscreen';
+import { useToast } from '@/app/components/ToastContext';
 
 type ApplicantProfile = {
   firstName: string;
@@ -20,6 +21,7 @@ export default function ApplicantDashboard() {
   const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
   const timeout = setTimeout(() => {
@@ -93,7 +95,10 @@ export default function ApplicantDashboard() {
 }, []);
 
   const refreshProfile = () => {
+    showToast('Profile updated successfully!');
+  setTimeout(() => {
     window.location.reload();
+  }, 2000);
   };
 
   if (loading) return <SplashScreen/>

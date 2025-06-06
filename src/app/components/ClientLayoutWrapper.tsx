@@ -3,6 +3,7 @@
 import { useEffect, useState, createContext, useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import SplashScreen from '@/app/components/splashscreen';
+import { ToastProvider } from '@/app/components/ToastContext';
 
 const SplashContext = createContext<{
   setSplashVisible: (value: boolean) => void;
@@ -20,18 +21,16 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   const pathname = usePathname();
 
   useEffect(() => {
-    const timeout = setTimeout(() => setInitialLoading(false), 1000); // Initial load 1s
+    const timeout = setTimeout(() => setInitialLoading(false), 1000);
     return () => clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
     if (!initialLoading) {
-      setSplashVisible(true); // show splash on route change
-
+      setSplashVisible(true);
       const timer = setTimeout(() => {
         setSplashVisible(false);
       }, 1500);
-
       return () => clearTimeout(timer);
     }
   }, [pathname, initialLoading]);
@@ -41,8 +40,10 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   };
 
   return (
-    <SplashContext.Provider value={contextValue}>
-      {splashVisible ? <SplashScreen /> : children}
-    </SplashContext.Provider>
+    <ToastProvider>
+      <SplashContext.Provider value={contextValue}>
+        {splashVisible ? <SplashScreen /> : children}
+      </SplashContext.Provider>
+    </ToastProvider>
   );
 }
