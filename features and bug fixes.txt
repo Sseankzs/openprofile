@@ -5,6 +5,8 @@ Required
 - another page for when applicant clicks on applied jobs
 
 Good to have before prelims
+- Add a function that hides the jobs applied in job search.
+- Add a function that shows number of current applicants
 - Add a splash screen for when a process is successfully updated/edited/applied
 - Add a status column that indicates the applicant's status (None, Contacted, Replied, Hired) and one for the applicant (Applied, Replied, Hired)
 - A button in the applicant page "/company/[jobID]/[applicantID]" that notifies the applicant

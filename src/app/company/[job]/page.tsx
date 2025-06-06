@@ -43,12 +43,35 @@ export default function JobDetailsPage() {
 
       setJobDetails(jobData);
 
-      const { data: applicationData } = await supabase
+      const { data: applicationData, error } = await supabase
         .from('applications')
-        .select('id, name, compatibility_score, competency_score, description')
-        .eq('job_id', job);
+        .select(`
+          id,
+          first_name,
+          last_name,
+          job_id,
+          application_analysis (
+            compatibility_score,
+            competency_score
+          )
+        `)
+        .eq('job_id', job); // Use job ID from the page params
 
-      setApplicants(applicationData || []);
+      if (error) {
+        console.error('Error fetching applicants:', error.message);
+      } else {
+        const formattedApplicants = (applicationData || []).map((app: any) => ({
+          id: app.id,
+          name: `${app.first_name} ${app.last_name}`,
+          compatibility_score: app.application_analysis?.compatibility_score ?? 0,
+          competency_score: app.application_analysis?.competency_score ?? 0,
+          description: jobDetails?.description || '', // Reuse job description already fetched
+        }));
+        setApplicants(formattedApplicants);
+      }
+
+
+
     };
 
     fetchData();

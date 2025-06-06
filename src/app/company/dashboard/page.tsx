@@ -120,8 +120,8 @@ export default function CompanyDashboard() {
           <h2 className="text-2xl font-bold mb-4">Jobs You’ve Posted</h2>
           {postedJobs.length > 0 ? (
             postedJobs.map((job) => (
-              <Link href={`/company/${job.id}`} key={job.id}>
-                <div className="cursor-pointer bg-white p-4 rounded shadow-md hover:bg-gray-50 transition m-4">
+              <Link href={`/company/${job.id}`} key={job.id} >
+                <div className="cursor-pointer bg-white p-4 rounded shadow-md max-h-28 overflow-hidden hover:bg-gray-50 transition m-4">
                   <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
                   <p className="text-gray-600">{job.location}</p>
                   <p className="mt-2 text-sm text-gray-700">{job.description}</p>

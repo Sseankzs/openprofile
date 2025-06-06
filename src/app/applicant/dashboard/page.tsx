@@ -124,7 +124,7 @@ export default function ApplicantDashboard() {
           <h2 className="text-2xl font-bold mb-4">Jobs You've Applied To</h2>
           {appliedJobs.length > 0 ? (
             appliedJobs.map((job) => (
-              <div key={job.id} className="bg-white p-4 rounded shadow-md">
+              <div key={job.id} className="bg-white p-4 rounded shadow-md max-h-28 overflow-hidden">
                 <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
                 <p className="text-gray-600">{job.company} - {job.location}</p>
                 <p className="mt-2 text-sm text-gray-700">{job.description}</p>

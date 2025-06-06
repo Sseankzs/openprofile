@@ -61,7 +61,7 @@ export default function PostJobPage() {
     ]);
 
     if (insertError) {
-      setError('Error posting job');
+      setError('Error posting job' + insertError.message);
     } else {
       router.push('/company/dashboard');
     }

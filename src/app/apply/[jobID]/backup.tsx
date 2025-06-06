@@ -52,6 +52,7 @@ export default function ApplyPage() {
   useEffect(() => {
   async function fetchData() {
     setLoading(true);
+
     // Get user
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -144,7 +145,9 @@ export default function ApplyPage() {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
-      
+
+      alert('fetching documents...');
+
       // 1. Fetch resume and cover letter file paths from user_documents
       const { data: documents, error: documentsError } = await supabase
         .from('user_documents')
@@ -163,11 +166,15 @@ export default function ApplyPage() {
       const resumeUrl = supabase.storage.from('documents').getPublicUrl(resumeDoc.file_path).data.publicUrl;
       const coverLetterUrl = supabase.storage.from('documents').getPublicUrl(coverLetterDoc.file_path).data.publicUrl;
 
+      alert('fetching files...');
+
       // Fetch the actual files
       const resumeRes = await fetch(resumeUrl);
       const coverLetterRes = await fetch(coverLetterUrl);
       const resumeBlob = await resumeRes.blob();
       const coverLetterBlob = await coverLetterRes.blob();
+
+      alert('fetching job description...');
 
       // 2. Get job description
       const { data: job, error: jobError } = await supabase
@@ -178,21 +185,21 @@ export default function ApplyPage() {
 
       if (jobError || !job?.description) throw new Error('Job description missing');
 
+
+
       // 3. Analyze application via API
       const formData = new FormData();
       formData.append('resume', resumeBlob, 'resume.pdf');
       formData.append('cover_letter', coverLetterBlob, 'cover_letter.pdf');
       formData.append('job_description', job.description);
 
-      const analysisRes = await fetch('http://localhost:8000/analyze_candidate', {
+      const analysisRes = await fetch('http://localhost:8000', {
         method: 'POST',
         body: formData,
       });
-      alert('Analysis request sent to API');
 
       if (!analysisRes.ok) throw new Error("Failed to analyze application");
       const analysisData = await analysisRes.json();
-      alert('Analysis received successfully');
 
       const { data: profile, error: profileError } = await supabase
         .from('applicant_profiles')
@@ -202,7 +209,7 @@ export default function ApplyPage() {
 
       if (profileError || !profile) {
         throw new Error("Failed to fetch applicant profile");
-  }
+}
 
       // 4. Submit application
       const { data: application, error: appInsertError } = await supabase.from('applications').insert({
@@ -227,11 +234,12 @@ export default function ApplyPage() {
         competency_score: analysisData.competency_score,
         competency_reasoning: analysisData.Reasoning_competency_score,
         compatibility_score: analysisData.compatibility_score,
-        compatibility_reasoning: analysisData.Reasoning_compatibility_score,
+        compatibility_reasoning: analysisData['Reasoning-compatibility_score'],
       });
 
       if (analysisInsertError) throw new Error("Failed to insert analysis");
 
+      alert('Application submitted and analyzed successfully!');
     } catch (error) {
       console.error(error);
       alert(error || 'Something went wrong during submission.');
