@@ -154,7 +154,7 @@ const handleSwitchRole = () => {
             {!profile?.company_name && (
               <button
                 type="button"
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-900 rounded transition"
+                className="px-4 py-2 bg-gray-300 rounded transition"
                 onClick={handleClick}>
                 Back to Applicant Profile
               </button>

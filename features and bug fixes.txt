@@ -1,9 +1,18 @@
-1. Fix alignment of first page div
-2. Add button to redirect back to applicant dashboard on company profile onboarding (only if the company does not have a profile)
-3. Add splash screen for loading time. 
-4. Clean up redirect to prevent loading initial page elements 
+TODO before prelim:
+Required
+- Update company job page to show applicants for specific job 
+- Create applicant page "/company/[jobID]/[applicantID]" that displays all information provided
+- another page for when applicant clicks on applied jobs
 
-Refine
+Good to have before prelims
+- Add a splash screen for when a process is successfully updated/edited/applied
+- Add a status column that indicates the applicant's status (None, Contacted, Replied, Hired) and one for the applicant (Applied, Replied, Hired)
+- A button in the applicant page "/company/[jobID]/[applicantID]" that notifies the applicant
+- Splash screen for loading
+- Error pop up component
+- Clean up redirect to prevent loading initial page elements
+
+Refine after prelims
 1. Limit image dimension/allow crop
 2. Add more content to first page (or change first page to a design page, and relocate current first page)
 3. Refine salary options (look up type of payment period)
@@ -13,3 +22,4 @@ Refine
 7. Add export to xlsx for job listed/jobs applied
 8. Add job status/applicant status
 9. Add another page for when applicant clicks on applied jobs
+10. Have an AI generated notifying system. 
