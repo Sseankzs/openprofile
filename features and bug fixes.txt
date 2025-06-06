@@ -1,0 +1,15 @@
+1. Fix alignment of first page div
+2. Add button to redirect back to applicant dashboard on company profile onboarding (only if the company does not have a profile)
+3. Add splash screen for loading time. 
+4. Clean up redirect to prevent loading initial page elements 
+
+Refine
+1. Limit image dimension/allow crop
+2. Add more content to first page (or change first page to a design page, and relocate current first page)
+3. Refine salary options (look up type of payment period)
+4. Make description required in posting job
+5. Remap the entire web directory to individual's id
+6. Add pagination for jobs
+7. Add export to xlsx for job listed/jobs applied
+8. Add job status/applicant status
+9. Add another page for when applicant clicks on applied jobs

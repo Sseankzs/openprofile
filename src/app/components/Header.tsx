@@ -103,7 +103,7 @@ export default function Header() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/documents" className="text-firered hover:text-crowblack font-mono">
+                  <Link href="/applicant/documents" className="text-firered hover:text-crowblack font-mono">
                     Documents
                   </Link>
                 </li>

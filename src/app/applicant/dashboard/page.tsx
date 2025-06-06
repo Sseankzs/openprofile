@@ -47,18 +47,35 @@ export default function ApplicantDashboard() {
         img_url: profileData.img_url ?? '',
       });
 
-      const { data: jobsData } = await supabase
+      const { data: jobsData, error } = await supabase
         .from('applications')
-        .select('job_id, jobs(title, company, location, description, img_url)')
-        .eq('applicant_id', user.id);
+        .select(`
+          job_id,
+          jobs (
+            id,
+            title,
+            location,
+            description,
+            company_profiles (
+              company_name,
+              logo_url
+            )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching applied jobs:', error);
+        return;
+      }
 
       const jobs = jobsData?.map((app: any) => ({
-        id: app.job_id,
+        id: app.jobs.id,
         title: app.jobs.title,
-        company: app.jobs.company,
+        company: app.jobs.company_profiles?.company_name || 'Unknown Company',
         location: app.jobs.location,
         description: app.jobs.description,
-        img_url: app.jobs.img_url || '/images/job-placeholder.png',
+        img_url: app.jobs.company_profiles?.logo_url || '/images/job-placeholder.png',
       })) ?? [];
 
       setAppliedJobs(jobs);
@@ -66,6 +83,7 @@ export default function ApplicantDashboard() {
 
     fetchData();
   }, []);
+
 
   const refreshProfile = () => {
     window.location.reload();

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import CompanyProfileModal from '@/app/components/EditCompany';
+import Link from 'next/link';
+
 
 type Job = {
   id: string;
@@ -12,6 +14,7 @@ type Job = {
 };
 
 type CompanyProfile = {
+  id: string;
   company_name: string;
   email: string;
   phone: string;
@@ -33,23 +36,30 @@ export default function CompanyDashboard() {
 
       if (!user) return;
 
-      const { data: profileData } = await supabase
+      // Fetch company profile by user_id
+      const { data: profileData, error: profileError } = await supabase
         .from('company_profiles')
-        .select('company_name, email, phone, website, description, logo_url')
+        .select('id, company_name, email, phone, website, description, logo_url')
         .eq('user_id', user.id)
         .single();
 
-      if (!profileData) {
+      if (profileError || !profileData) {
         setShowEditModal(true);
         return;
       }
 
       setProfile(profileData);
 
-      const { data: jobsData } = await supabase
+      // Fetch jobs using company_id from company_profiles
+      const { data: jobsData, error: jobsError } = await supabase
         .from('jobs')
         .select('id, title, location, description')
-        .eq('posted_by', user.id);
+        .eq('company_id', profileData.id);
+
+      if (jobsError) {
+        console.error('Error fetching jobs:', jobsError);
+        return;
+      }
 
       if (jobsData) setPostedJobs(jobsData);
     };
@@ -76,12 +86,25 @@ export default function CompanyDashboard() {
         {/* Left (Sticky Profile) */}
         <div className="md:col-span-2">
           <div className="min-h-[70vh] sticky top-6 bg-white p-6 rounded shadow-md">
-            <img src={profile?.logo_url || '/images/profile-placeholder.png'} className="w-32 h-32 object-cover rounded mb-4" />
+            <img
+              src={profile?.logo_url || '/images/profile-placeholder.png'}
+              className="w-32 h-32 object-cover rounded mb-4"
+              alt="Company Logo"
+            />
             <h2 className="text-2xl font-bold mb-4">Company Profile</h2>
             <p><strong>Name:</strong> {profile?.company_name ?? 'No Company Name'}</p>
             <p><strong>Email:</strong> {profile?.email}</p>
             <p><strong>Phone:</strong> {profile?.phone}</p>
-            <p><strong>Website:</strong> <a href={profile?.website} className="text-blue-500 underline" target="_blank" rel="noopener noreferrer">{profile?.website}</a></p>
+            <p><strong>Website:</strong>{' '}
+              <a
+                href={profile?.website}
+                className="text-blue-500 underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {profile?.website}
+              </a>
+            </p>
             <p><strong>Description:</strong> {profile?.description}</p>
             <button
               className="mt-4 px-4 py-2 bg-fireopal text-white rounded hover:bg-crowblack"
@@ -97,11 +120,13 @@ export default function CompanyDashboard() {
           <h2 className="text-2xl font-bold mb-4">Jobs You’ve Posted</h2>
           {postedJobs.length > 0 ? (
             postedJobs.map((job) => (
-              <div key={job.id} className="bg-white p-4 rounded shadow-md">
-                <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
-                <p className="text-gray-600">{job.location}</p>
-                <p className="mt-2 text-sm text-gray-700">{job.description}</p>
-              </div>
+              <Link href={`/company/${job.id}`} key={job.id}>
+                <div className="cursor-pointer bg-white p-4 rounded shadow-md hover:bg-gray-50 transition m-4">
+                  <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
+                  <p className="text-gray-600">{job.location}</p>
+                  <p className="mt-2 text-sm text-gray-700">{job.description}</p>
+                </div>
+              </Link>
             ))
           ) : (
             <p className="text-gray-500">You haven’t posted any jobs yet.</p>
