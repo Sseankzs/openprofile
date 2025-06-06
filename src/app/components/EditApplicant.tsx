@@ -12,42 +12,61 @@ export default function EditProfileModal({ profile, onClose, onUpdate, forceOpen
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    if (imageFile && imageFile.size > 1 * 1024 * 1024) {
-      setError('Image must be under 1MB');
+  if (imageFile && imageFile.size > 1 * 1024 * 1024) {
+    setError('Image must be under 1MB');
+    return;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  let imageUrl = profile?.img_url || null;
+  if (imageFile) {
+    const { data, error: uploadError } = await supabase.storage
+      .from('applicant-images')
+      .upload(`profile-${user.id}`, imageFile, {
+        upsert: true,
+        cacheControl: '3600',
+      });
+
+    if (uploadError) {
+      setError('Failed to upload image: ' + uploadError.message);
       return;
     }
 
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: publicUrl } = supabase.storage
+      .from('applicant-images')
+      .getPublicUrl(`profile-${user.id}`);
+    imageUrl = publicUrl.publicUrl;
+  }
 
-    let imageUrl = profile?.img_url;
-    if (imageFile) {
-      const { data, error: uploadError } = await supabase.storage
-        .from('applicant-images')
-        .upload(`profile-${user.id}`, imageFile, {
-          upsert: true,
-          cacheControl: '3600',
-        });
-
-      if (uploadError) {
-        setError('Failed to upload image' + uploadError.message);
-        return;
-      }
-
-      const { data: publicUrl } = supabase.storage
-        .from('applicant-images')
-        .getPublicUrl(`profile-${user.id}`);
-      imageUrl = publicUrl.publicUrl;
-    }
-
+  if (profile?.user_id) {
+    // Update existing profile by user_id
     const { error: updateError } = await supabase
       .from('applicant_profiles')
-      .upsert({
+      .update({
+        first_name: firstName,
+        last_name: lastName,
+        phone,
+        linkedin,
+        img_url: imageUrl,
+      })
+      .eq('user_id', profile.user_id);
+
+    if (updateError) {
+      setError('Failed to update profile');
+      return;
+    }
+  } else {
+    // Insert new profile
+    const { error: insertError } = await supabase
+      .from('applicant_profiles')
+      .insert({
         user_id: user.id,
         first_name: firstName,
         last_name: lastName,
@@ -56,14 +75,15 @@ export default function EditProfileModal({ profile, onClose, onUpdate, forceOpen
         img_url: imageUrl,
       });
 
-    if (updateError) {
-      setError('Failed to update profile');
+    if (insertError) {
+      setError('Failed to create profile');
       return;
     }
+  }
 
-    onUpdate();
-    onClose();
-  };
+  onUpdate();
+  onClose();
+};
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">

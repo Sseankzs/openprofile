@@ -31,6 +31,30 @@ export default function CompanyDashboard() {
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
 
+  const updateProfile = async (updatedData: Partial<CompanyProfile>) => {
+  if (!profile?.id) {
+    console.error('No profile id found for update');
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from('company_profiles')
+    .update(updatedData)
+    .eq('id', profile.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating profile:', error);
+    return false;
+  }
+
+  // Optionally update local profile state immediately
+  setProfile(data);
+
+  return true;
+};
+
   // fetch profile and jobs data
   const fetchData = async () => {
     setLoading(true);
@@ -93,6 +117,7 @@ export default function CompanyDashboard() {
           profile={profile}
           onClose={() => setShowEditModal(false)}
           onUpdate={refreshProfile}
+          onSave={updateProfile}
           forceOpen={!profile}
         />
       )}

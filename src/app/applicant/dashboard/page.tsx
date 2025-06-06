@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import EditProfileModal from '@/app/components/EditApplicant';
 import SplashScreen from '@/app/components/splashscreen';
 import { useToast } from '@/app/components/ToastContext';
+import Link from 'next/link';
 
 type ApplicantProfile = {
   firstName: string;
@@ -138,12 +139,17 @@ export default function ApplicantDashboard() {
           <h2 className="text-2xl font-bold mb-4">Jobs You've Applied To</h2>
           {appliedJobs.length > 0 ? (
             appliedJobs.map((job) => (
-              <div key={job.id} className="bg-white p-4 rounded shadow-md">
-                <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
-                <p className="text-gray-600">{job.company} - {job.location}</p>
-                <p className="mt-2 text-sm text-gray-700">{job.description}</p>
-              </div>
-            ))
+              <Link
+                key={job.id}
+                href={`/applicant/applied/${job.id}`}
+                className="block bg-white p-4 rounded shadow-md hover:bg-gray-50"
+              >
+              <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
+              <p className="text-gray-600">{job.company} - {job.location}</p>
+              <p className="mt-2 text-sm text-gray-700">{job.description}</p>
+            </Link>
+))
+
           ) : (
             <p className="text-gray-500">You haven’t applied to any jobs yet.</p>
           )}
