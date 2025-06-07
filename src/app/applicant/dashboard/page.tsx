@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import EditProfileModal from '@/app/components/EditApplicant';
+import SplashScreen from '@/app/components/splashscreen';
+import { useToast } from '@/app/components/ToastContext';
+import Link from 'next/link';
 
 type ApplicantProfile = {
   firstName: string;
@@ -18,76 +21,88 @@ export default function ApplicantDashboard() {
   const [profile, setProfile] = useState<ApplicantProfile | null>(null);
   const [appliedJobs, setAppliedJobs] = useState<any[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+  const timeout = setTimeout(() => {
+    setLoading(false);
+  }, 5000);
 
-      if (!user) return;
+  const fetchData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const { data: profileData } = await supabase
-        .from('applicant_profiles')
-        .select('first_name, last_name, phone, linkedin, img_url')
-        .eq('user_id', user.id)
-        .single();
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-      if (!profileData) {
-        setShowEditModal(true);
-        return;
-      }
+    const { data: profileData } = await supabase
+      .from('applicant_profiles')
+      .select('first_name, last_name, phone, linkedin, img_url')
+      .eq('user_id', user.id)
+      .single();
 
-      setProfile({
-        firstName: profileData.first_name,
-        lastName: profileData.last_name,
-        email: user.email ?? '',
-        phone: profileData.phone ?? '',
-        linkedin: profileData.linkedin ?? '',
-        img_url: profileData.img_url ?? '',
-      });
+    if (!profileData) {
+      setShowEditModal(true);
+      setLoading(false);
+      return;
+    }
 
-      const { data: jobsData, error } = await supabase
-        .from('applications')
-        .select(`
-          job_id,
-          jobs (
-            id,
-            title,
-            location,
-            description,
-            company_profiles (
-              company_name,
-              logo_url
-            )
+    setProfile({
+      firstName: profileData.first_name,
+      lastName: profileData.last_name,
+      email: user.email ?? '',
+      phone: profileData.phone ?? '',
+      linkedin: profileData.linkedin ?? '',
+      img_url: profileData.img_url ?? '',
+    });
+
+    const { data: jobsData, error } = await supabase
+      .from('applications')
+      .select(`
+        job_id,
+        jobs (
+          id,
+          title,
+          location,
+          description,
+          company_profiles (
+            company_name,
+            logo_url
           )
-        `)
-        .eq('user_id', user.id);
+        )
+      `)
+      .eq('user_id', user.id);
 
-      if (error) {
-        console.error('Error fetching applied jobs:', error);
-        return;
-      }
-
-      const jobs = jobsData?.map((app: any) => ({
+    if (!error && jobsData) {
+      const jobs = jobsData.map((app: any) => ({
         id: app.jobs.id,
         title: app.jobs.title,
         company: app.jobs.company_profiles?.company_name || 'Unknown Company',
         location: app.jobs.location,
         description: app.jobs.description,
         img_url: app.jobs.company_profiles?.logo_url || '/images/job-placeholder.png',
-      })) ?? [];
-
+      }));
       setAppliedJobs(jobs);
-    };
+    }
 
-    fetchData();
-  }, []);
+    setLoading(false);
+  };
 
+  fetchData().finally(() => clearTimeout(timeout));
+}, []);
 
   const refreshProfile = () => {
+    showToast('Profile updated successfully!');
+  setTimeout(() => {
     window.location.reload();
+  }, 2000);
   };
+
+  if (loading) return <SplashScreen/>
 
   return (
     <div className="min-h-[75vh] bg-gray-100 p-6 font-mono">
@@ -124,12 +139,17 @@ export default function ApplicantDashboard() {
           <h2 className="text-2xl font-bold mb-4">Jobs You've Applied To</h2>
           {appliedJobs.length > 0 ? (
             appliedJobs.map((job) => (
-              <div key={job.id} className="bg-white p-4 rounded shadow-md max-h-28 overflow-hidden">
-                <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
-                <p className="text-gray-600">{job.company} - {job.location}</p>
-                <p className="mt-2 text-sm text-gray-700">{job.description}</p>
-              </div>
-            ))
+              <Link
+                key={job.id}
+                href={`/applicant/applied/${job.id}`}
+                className="block bg-white p-4 rounded shadow-md max-h-28 overflow-hidden hover:bg-gray-50"
+              >
+              <h3 className="text-xl font-semibold text-firered">{job.title}</h3>
+              <p className="text-gray-600">{job.company} - {job.location}</p>
+              <p className="mt-2 text-sm text-gray-700">{job.description}</p>
+            </Link>
+))
+
           ) : (
             <p className="text-gray-500">You haven’t applied to any jobs yet.</p>
           )}

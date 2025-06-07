@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import CompanyProfileModal from '@/app/components/EditCompany';
+import SplashScreen from '@/app/components/splashscreen';
 import Link from 'next/link';
-
+import { useToast } from '@/app/components/ToastContext';
 
 type Job = {
   id: string;
@@ -27,49 +28,87 @@ export default function CompanyDashboard() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [postedJobs, setPostedJobs] = useState<Job[]>([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
+
+  const updateProfile = async (updatedData: Partial<CompanyProfile>) => {
+  if (!profile?.id) {
+    console.error('No profile id found for update');
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from('company_profiles')
+    .update(updatedData)
+    .eq('id', profile.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating profile:', error);
+    return false;
+  }
+
+  // Optionally update local profile state immediately
+  setProfile(data);
+
+  return true;
+};
+
+  // fetch profile and jobs data
+  const fetchData = async () => {
+    setLoading(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('company_profiles')
+      .select('id, company_name, email, phone, website, description, logo_url')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !profileData) {
+      setShowEditModal(true);
+      setLoading(false);
+      return;
+    }
+
+    setProfile(profileData);
+
+    const { data: jobsData, error: jobsError } = await supabase
+      .from('jobs')
+      .select('id, title, location, description')
+      .eq('company_id', profileData.id);
+
+    if (jobsError) {
+      console.error('Error fetching jobs:', jobsError);
+      setLoading(false);
+      return;
+    }
+
+    setPostedJobs(jobsData || []);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      // Fetch company profile by user_id
-      const { data: profileData, error: profileError } = await supabase
-        .from('company_profiles')
-        .select('id, company_name, email, phone, website, description, logo_url')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError || !profileData) {
-        setShowEditModal(true);
-        return;
-      }
-
-      setProfile(profileData);
-
-      // Fetch jobs using company_id from company_profiles
-      const { data: jobsData, error: jobsError } = await supabase
-        .from('jobs')
-        .select('id, title, location, description')
-        .eq('company_id', profileData.id);
-
-      if (jobsError) {
-        console.error('Error fetching jobs:', jobsError);
-        return;
-      }
-
-      if (jobsData) setPostedJobs(jobsData);
-    };
-
     fetchData();
   }, []);
 
-  const refreshProfile = () => {
-    window.location.reload();
+  // refresh profile and jobs after update, no reload
+  const refreshProfile = async () => {
+    showToast('Profile updated successfully!');
+    await fetchData();
+    setShowEditModal(false);
   };
+
+  if (loading) return <SplashScreen />;
 
   return (
     <div className="min-h-[75vh] bg-gray-100 p-6 font-mono">
@@ -78,6 +117,7 @@ export default function CompanyDashboard() {
           profile={profile}
           onClose={() => setShowEditModal(false)}
           onUpdate={refreshProfile}
+          onSave={updateProfile}
           forceOpen={!profile}
         />
       )}

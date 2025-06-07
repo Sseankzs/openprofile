@@ -66,24 +66,47 @@ const handleSwitchRole = () => {
       logoUrl = publicUrl.publicUrl;
     }
 
-    const { error: updateError } = await supabase.from('company_profiles').upsert({
-      user_id: user.id,
-      company_name: companyName,
-      phone,
-      website,
-      description,
-      logo_url: logoUrl,
-      email: user.email, // Save current email
-    });
+    if (profile?.id) {
+    // Update existing profile
+    const { error: updateError } = await supabase
+      .from('company_profiles')
+      .update({
+        company_name: companyName,
+        phone,
+        website,
+        description,
+        logo_url: logoUrl,
+        email: user.email,
+      })
+      .eq('id', profile.id);
 
     if (updateError) {
       setError('Failed to update profile');
       return;
     }
+  } else {
+    // Insert new profile
+    const { error: insertError } = await supabase
+      .from('company_profiles')
+      .insert({
+        user_id: user.id,
+        company_name: companyName,
+        phone,
+        website,
+        description,
+        logo_url: logoUrl,
+        email: user.email,
+      });
 
-    onUpdate();
-    onClose();
-  };
+    if (insertError) {
+      setError('Failed to create profile');
+      return;
+    }
+  }
+
+  onUpdate();
+  onClose();
+};
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
