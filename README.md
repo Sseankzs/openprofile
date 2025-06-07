@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Portal Web Application
+
+A modern job portal built with Next.js and Supabase. Companies can post jobs and manage applicants. Applicants can apply with a resume and cover letter, which are analyzed and scored using an integrated AI microservice.
+
+## Technologies Used
+
+- Next.js (React framework)
+- Tailwind CSS (UI styling)
+- Supabase (Database, Auth, Storage)
+- FastAPI microservice for resume/job analysis
+- Google Gemini API (AI scoring and summaries)
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/job-portal-app.git
+cd job-portal-app
+```
+
+### 2. Install Frontend Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+You can get these keys from your Supabase project dashboard.
+
+### 4. Run the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Resume & Job Scoring Microservice
 
-## Learn More
+This app integrates with a separate Python microservice that analyzes resumes, cover letters, and job descriptions using the Google Gemini API.
 
-To learn more about Next.js, take a look at the following resources:
+### Microservice Repository
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Clone the analyzer from:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+https://github.com/Sseankzs/ApplicantAnalyzer
+```
 
-## Deploy on Vercel
+### 1. Install Python Dependencies
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pip install fastapi uvicorn python-multipart pdfplumber google-generativeai python-dotenv
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 2. Set Up Environment Variables
+
+Create a `.env` file in the root of the microservice project and add your Google API key:
+
+```env
+GOOGLE_API_KEY=your-google-gemini-api-key
+```
+
+### 3. Start the API Server
+
+```bash
+uvicorn gemini_applicant_analyzer:app --reload --port 8000
+```
+
+The service will be available at [http://localhost:8000](http://localhost:8000).
+
+### 4. Optional: Test the API with curl
+
+```bash
+curl -X POST http://localhost:8000/analyze_candidate \
+  -F "resume=@sample_resume.pdf" \
+  -F "cover_letter=@sample_cover_letter.pdf" \
+  -F "job_description=$(cat sample_job_description_1.txt)$"
+```
+
+---
+
+## Notes
+
+- Make sure the microservice is running locally before testing applications in the frontend.
+- Authentication is handled by Supabase; users select their role (Applicant or Company) during signup.
+- Files like resumes and profile images are stored using Supabase Storage.
+
+---
+
+## License
+
+MIT License
