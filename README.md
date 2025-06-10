@@ -17,8 +17,8 @@ A modern job portal built with Next.js and Supabase. Companies can post jobs and
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/job-portal-app.git
-cd job-portal-app
+git clone https://github.com/Sseankzs/openprofile
+cd openprofile
 ```
 
 ### 2. Install Frontend Dependencies
@@ -37,7 +37,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-You can get these keys from your Supabase project dashboard.
+You can get these keys from your Supabase project dashboard. Or you may contact sseankong52@gmail.com for the supabase url and key to the existing prototype database
 
 ### 4. Run the Development Server
 
